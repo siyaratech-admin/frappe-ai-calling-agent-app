@@ -8,7 +8,7 @@ import { webserver_port } from '../../../sites/common_site_config.json'
 export default defineConfig({
   plugins: [vue()],
   server: {
-    port: 8000,
+    port: 8001,
     proxy: getProxyOptions({ port: webserver_port }),
   },
   resolve: {
@@ -31,6 +31,6 @@ export default defineConfig({
     }
   },
   optimizeDeps: {
-    include: ['frappe-ui > feather-icons', 'showdown', 'engine.io-client'],
+    include: ['frappe-ui > feather-icons', 'showdown', 'engine.io-client', 'debug'],
   },
 })

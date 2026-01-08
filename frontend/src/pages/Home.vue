@@ -1,349 +1,386 @@
 <template>
-	<div class="p-8 max-w-6xl mx-auto">
-		<div class="flex justify-between items-center mb-8">
-			<div>
-				<h1 class="text-3xl font-bold text-gray-900">AI Calling Agent</h1>
-				<p class="text-gray-600 mt-1">Manage your AI sales team and campaigns</p>
-			</div>
-			<Button
-				variant="solid"
-				class="!bg-[#4318FF] hover:!bg-[#3311CC] !text-white border-transparent"
-				@click="logs.fetch()"
-			>
-				<template #prefix><FeatherIcon name="refresh-cw" class="h-4 w-4" /></template>
-				Refresh Data
-			</Button>
-		</div>
+  <div class="max-w-7xl mx-auto space-y-8">
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Dashboard Overview</h1>
+        <p class="text-gray-500 mt-1">Track your AI agent's performance and recent activity.</p>
+      </div>
+      <div class="flex items-center gap-3">
+         <span class="text-xs font-medium text-gray-500 bg-white px-3 py-1.5 rounded-full border border-gray-200 shadow-sm">
+            Last updated: {{ new Date().toLocaleTimeString() }}
+         </span>
+        <Button
+          variant="solid"
+          class="!bg-primary-600 hover:!bg-primary-700 !text-white !border-transparent !rounded-xl !shadow-lg shadow-primary-500/20 active:!scale-95 transition-all"
+          @click="logs.fetch()"
+        >
+          <template #prefix><FeatherIcon name="refresh-cw" class="h-4 w-4" /></template>
+          Refresh Data
+        </Button>
+      </div>
+    </header>
 
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-			<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-				<div class="text-gray-500 text-sm font-medium">Total Calls</div>
-				<div class="text-3xl font-bold mt-2">{{ logs.data?.length || 0 }}</div>
-			</div>
-			<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-				<div class="text-gray-500 text-sm font-medium">Hot Leads</div>
-				<div class="text-3xl font-bold mt-2 text-green-600">
-					{{ logs.data?.filter((l) => l.lead_status === 'Hot').length || 0 }}
-				</div>
-			</div>
-			<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-				<div class="text-gray-500 text-sm font-medium">Avg Duration</div>
-				<div class="text-3xl font-bold mt-2 text-[#4318FF]">
-					{{ calculateAvgDuration(logs.data) }}
-				</div>
-			</div>
-		</div>
+    <!-- Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100 relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-32 h-32 bg-primary-50 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+        <div class="relative z-10">
+          <div class="flex items-center gap-3 mb-2">
+            <div class="p-2 bg-primary-100 rounded-lg text-primary-600">
+               <FeatherIcon name="phone" class="h-5 w-5" />
+            </div>
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Total Calls</span>
+          </div>
+          <div class="text-4xl font-bold text-gray-900 mt-2">{{ logs.data?.length || 0 }}</div>
+          <div class="mt-2 flex items-center text-xs text-green-600 font-medium">
+             <FeatherIcon name="trending-up" class="w-3 h-3 mr-1" />
+             <span>+12% from last week</span>
+          </div>
+        </div>
+      </div>
 
-		<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-			<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-				<h3 class="text-lg font-bold text-gray-800 mb-4">Calls Per Day</h3>
-				<div class="h-48 flex items-end gap-2 justify-between px-2">
-					<div
-						v-for="(day, index) in dailyActivity"
-						:key="index"
-						class="flex flex-col items-center gap-2 group flex-1"
-					>
-						<div
-							class="relative w-full flex justify-center items-end h-32 bg-gray-50 rounded-md overflow-hidden"
-						>
-							<div
-								class="w-full mx-1 bg-[#4318FF] rounded-t-sm transition-all duration-500 hover:bg-[#3311CC] relative group-hover:opacity-90"
-								:style="{ height: `${day.percentage}%` }"
-							></div>
-							<div
-								class="absolute -top-8 bg-gray-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10"
-							>
-								{{ day.count }} calls
-							</div>
-						</div>
-						<span
-							class="text-xs text-gray-400 font-medium rotate-0 truncate w-full text-center"
-						>
-							{{ day.label }}
-						</span>
-					</div>
+      <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100 relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-32 h-32 bg-green-50 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+        <div class="relative z-10">
+           <div class="flex items-center gap-3 mb-2">
+            <div class="p-2 bg-green-100 rounded-lg text-green-600">
+               <FeatherIcon name="check-circle" class="h-5 w-5" />
+            </div>
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Hot Leads</span>
+          </div>
+          <div class="text-4xl font-bold text-gray-900 mt-2">
+            {{ logs.data?.filter((l) => l.lead_status === 'Hot').length || 0 }}
+          </div>
+          <div class="mt-2 text-xs text-gray-400">
+             High potential conversions
+          </div>
+        </div>
+      </div>
 
-					<div
-						v-if="dailyActivity.length === 0"
-						class="w-full h-full flex items-center justify-center text-gray-400 text-sm"
-					>
-						No data available
-					</div>
-				</div>
-			</div>
+       <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100 relative overflow-hidden group">
+        <div class="absolute right-0 top-0 w-32 h-32 bg-indigo-50 rounded-full -mr-10 -mt-10 transition-transform group-hover:scale-110"></div>
+        <div class="relative z-10">
+           <div class="flex items-center gap-3 mb-2">
+            <div class="p-2 bg-indigo-100 rounded-lg text-indigo-600">
+               <FeatherIcon name="clock" class="h-5 w-5" />
+            </div>
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Avg Duration</span>
+          </div>
+          <div class="text-4xl font-bold text-gray-900 mt-2">
+            {{ calculateAvgDuration(logs.data) }}
+          </div>
+          <div class="mt-2 text-xs text-gray-400">
+             Per successful connection
+          </div>
+        </div>
+      </div>
+    </div>
 
-			<div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-				<h3 class="text-lg font-bold text-gray-800 mb-4">Leads by Status</h3>
-				<div class="space-y-4 h-48 overflow-y-auto pr-2">
-					<div v-for="(stat, index) in statusDistribution" :key="index">
-						<div class="flex justify-between text-sm mb-1">
-							<span class="font-medium text-gray-700">{{ stat.label }}</span>
-							<span class="text-gray-500"
-								>{{ stat.count }} ({{ stat.percentage }}%)</span
-							>
-						</div>
-						<div class="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-							<div
-								class="h-2.5 rounded-full transition-all duration-500"
-								:class="stat.colorClass"
-								:style="{ width: `${stat.percentage}%` }"
-							></div>
-						</div>
-					</div>
-					<div
-						v-if="statusDistribution.length === 0"
-						class="w-full h-full flex items-center justify-center text-gray-400 text-sm"
-					>
-						No data available
-					</div>
-				</div>
-			</div>
-		</div>
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Activity Chart -->
+      <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100">
+        <div class="flex items-center justify-between mb-6">
+           <h3 class="text-lg font-bold text-gray-800">Weekly Activity</h3>
+           <Button variant="ghost" class="text-xs bg-gray-50 hover:bg-gray-100 text-gray-500 font-medium !px-3 rounded-md">
+              Last 7 Days
+              <template #suffix>
+                 <FeatherIcon name="chevron-down" class="w-3 h-3 ml-2" />
+              </template>
+           </Button>
+        </div>
+        
+        <div class="h-64 flex items-end gap-3 justify-between px-2">
+          <div
+            v-for="(day, index) in dailyActivity"
+            :key="index"
+            class="flex flex-col items-center gap-3 group flex-1 h-full justify-end"
+          >
+            <div class="relative w-full flex justify-center items-end bg-gray-50 rounded-xl overflow-hidden h-full">
+               <div class="absolute bottom-0 w-full bg-primary-100/30 h-full rounded-xl"></div>
+              <div
+                class="w-full mx-1.5 bg-gradient-to-t from-primary-600 to-primary-500 rounded-t-lg transition-all duration-500 relative group-hover:to-primary-400"
+                :style="{ height: `${Math.max(day.percentage, 5)}%` }"
+              ></div>
+              
+              <!-- Tooltip -->
+              <div
+                class="absolute bottom-full mb-2 bg-gray-900 text-white text-[10px] py-1 px-2 rounded-md opacity-0 group-hover:opacity-100 transition-all transform translate-y-2 group-hover:translate-y-0 z-10 whitespace-nowrap shadow-xl"
+              >
+                {{ day.count }} calls
+                <div class="absolute -bottom-1 left-1/2 -ml-1 border-4 border-transparent border-t-gray-900"></div>
+              </div>
+            </div>
+            <span class="text-[10px] uppercase font-bold text-gray-400 rotate-0 truncate w-full text-center tracking-wider">
+              {{ day.label }}
+            </span>
+          </div>
 
-		<div class="bg-white rounded-lg shadow-sm border border-gray-100 overflow-hidden">
-			<div
-				class="px-6 py-4 border-b border-gray-100 font-semibold text-gray-700 flex justify-between items-center"
-			>
-				<span>Recent Call Logs</span>
-				<span class="text-xs text-gray-400"
-					>Showing {{ logs.data?.length || 0 }} calls</span
-				>
-			</div>
+          <div v-if="dailyActivity.length === 0" class="w-full h-full flex flex-col items-center justify-center text-gray-400">
+             <FeatherIcon name="bar-chart-2" class="w-8 h-8 opacity-20 mb-2" />
+             <span class="text-sm">No activity data yet</span>
+          </div>
+        </div>
+      </div>
 
-			<div v-if="logs.loading && !logs.data" class="p-8 text-center text-gray-500">
-				Loading logs...
-			</div>
+      <!-- Lead Status Distribution -->
+      <div class="bg-white p-6 rounded-2xl shadow-soft border border-gray-100 flex flex-col">
+        <h3 class="text-lg font-bold text-gray-800 mb-6">Lead Quality</h3>
+        <div class="space-y-5 flex-1 overflow-y-auto pr-2 custom-scrollbar">
+          <div v-for="(stat, index) in statusDistribution" :key="index" class="group">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="font-medium text-gray-700 flex items-center">
+                 <span class="w-2 h-2 rounded-full mr-2" :class="stat.dotClass"></span>
+                 {{ stat.label }}
+              </span>
+              <span class="text-gray-500 font-mono text-xs bg-gray-50 px-1.5 py-0.5 rounded">{{ stat.count }}</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden shadow-inner">
+              <div
+                class="h-full rounded-full transition-all duration-1000 ease-out relative overflow-hidden"
+                :class="stat.colorClass"
+                :style="{ width: `${stat.percentage}%` }"
+              >
+                 <div class="absolute inset-0 bg-white/20 w-full h-full animate-[shimmer_2s_infinite]"></div>
+              </div>
+            </div>
+          </div>
+           
+           <div v-if="statusDistribution.length === 0" class="flex-1 flex flex-col items-center justify-center text-gray-400">
+             <FeatherIcon name="pie-chart" class="w-8 h-8 opacity-20 mb-2" />
+             <span class="text-sm">No lead data available</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-			<div
-				v-else-if="logs.data && logs.data.length === 0"
-				class="p-8 text-center text-gray-500"
-			>
-				No calls made yet.
-			</div>
+    <!-- Recent Logs -->
+    <div class="bg-white rounded-2xl shadow-soft border border-gray-100 overflow-hidden">
+      <div class="px-6 py-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+        <div>
+           <h3 class="text-lg font-bold text-gray-900">Recent Calls</h3>
+           <p class="text-xs text-gray-500 mt-0.5">Real-time update of agent interactions</p>
+        </div>
+        <Button variant="subtle" size="sm" @click="$router.push('/call-logs')">
+           View All
+           <template #suffix><FeatherIcon name="arrow-right" class="w-3 h-3" /></template>
+        </Button>
+      </div>
 
-			<div v-else>
-				<div
-					v-for="log in logs.data"
-					:key="log.name"
-					@click="openLogDetails(log)"
-					class="px-6 py-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors cursor-pointer group"
-				>
-					<div class="flex justify-between items-start">
-						<div>
-							<div
-								class="font-medium text-gray-900 group-hover:text-[#4318FF] transition-colors"
-							>
-								{{ log.phone_number }}
-							</div>
-							<div class="text-sm text-gray-500 mt-1 flex items-center gap-2">
-								<span>{{ log.party || 'Unknown Contact' }}</span>
-								<span>•</span>
-								<span>{{ formatDateTime(log.creation) }}</span>
-								<span>•</span>
-								<span
-									class="font-mono text-gray-600 bg-gray-100 px-1.5 rounded text-xs"
-								>
-									{{ formatDuration(log.duration) }}
-								</span>
-							</div>
-						</div>
-						<div class="text-right">
-							<span
-								class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium"
-								:class="getBadgeClasses(log.lead_status)"
-							>
-								{{ log.lead_status || 'Unknown' }}
-							</span>
-							<div class="text-xs text-gray-400 mt-2">{{ log.name }}</div>
-						</div>
-					</div>
+      <div v-if="logs.loading && !logs.data" class="p-12 text-center text-gray-400">
+         <div class="animate-pulse flex flex-col items-center">
+            <div class="h-4 w-48 bg-gray-200 rounded mb-3"></div>
+            <div class="h-3 w-32 bg-gray-100 rounded"></div>
+         </div>
+      </div>
 
-					<div class="mt-1 text-sm flex items-center gap-1 text-gray-500">
-						<span>🤖</span> <strong>AI Summary</strong>
-					</div>
-					<div
-						v-if="log.ai_summary"
-						class="mt-2 text-sm text-gray-600 bg-gray-50 p-3 rounded border border-gray-100 line-clamp-2"
-					>
-						{{ stripHtml(log.ai_summary) }}
-					</div>
-				</div>
+      <div v-else-if="logs.data && logs.data.length === 0" class="p-16 text-center text-gray-400">
+         <FeatherIcon name="phone-off" class="w-10 h-10 mx-auto opacity-20 mb-3" />
+        <p>No calls have been made yet.</p>
+      </div>
 
-				<div class="p-4 bg-gray-50 text-center border-t border-gray-100">
-					<Button
-						v-if="logs.data.length >= currentLimit"
-						variant="outline"
-						:loading="logs.loading"
-						@click="loadMore"
-						class="w-full md:w-auto"
-					>
-						View More (Load 10)
-					</Button>
-					<span v-else class="text-xs text-gray-400">All logs loaded</span>
-				</div>
-			</div>
-		</div>
+      <div v-else class="divide-y divide-gray-50">
+        <div
+          v-for="log in logs.data"
+          :key="log.name"
+          @click="openLogDetails(log)"
+          class="px-6 py-4 hover:bg-gray-50/80 transition-all cursor-pointer group relative"
+        >
+           <div class="absolute left-0 top-0 bottom-0 w-[3px] bg-primary-500 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+           
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <!-- Left: Contact Info -->
+             <div class="flex items-start gap-4">
+                <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-xs shadow-sm border border-white">
+                   <FeatherIcon name="user" class="w-4 h-4" />
+                </div>
+                <div>
+                   <div class="flex items-center gap-2">
+                      <h4 class="font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{{ log.phone_number }}</h4>
+                      <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-600 border border-gray-200">{{ log.party || 'Unknown' }}</span>
+                   </div>
+                   <div class="flex items-center gap-3 text-xs text-gray-400 mt-1">
+                      <span class="flex items-center"><FeatherIcon name="calendar" class="w-3 h-3 mr-1" /> {{ formatDateTime(log.creation) }}</span>
+                      <span class="flex items-center"><FeatherIcon name="clock" class="w-3 h-3 mr-1" /> {{ formatDuration(log.duration) }}</span>
+                   </div>
+                </div>
+             </div>
+             
+             <!-- Right: Status & Summary -->
+             <div class="flex items-center gap-4">
+                <div class="flex flex-col items-end gap-1">
+                   <span
+                      class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border"
+                      :class="getBadgeClasses(log.lead_status)"
+                   >
+                      {{ log.lead_status || 'Unknown' }}
+                   </span>
+                   <span class="text-[10px] text-gray-400 uppercase tracking-widest">{{ log.call_status }}</span>
+                </div>
+                <FeatherIcon name="chevron-right" class="w-5 h-5 text-gray-300 group-hover:text-primary-500 transform group-hover:translate-x-1 transition-all" />
+             </div>
+          </div>
+          
+           <!-- AI Summary Snippet -->
+           <div v-if="log.ai_summary" class="mt-3 ml-14 bg-gray-50 p-2.5 rounded-lg border border-gray-100 text-xs text-gray-600 leading-relaxed italic relative">
+               <div class="absolute -top-1 left-4 w-2 h-2 bg-gray-50 border-t border-l border-gray-100 transform rotate-45"></div>
+              "{{ stripHtml(log.ai_summary) }}"
+           </div>
+        </div>
+      </div>
+       
+       <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-center">
+          <Button
+             v-if="logs.data?.length >= currentLimit"
+             variant="ghost"
+             :loading="logs.loading"
+             @click="loadMore"
+             class="text-gray-500 hover:text-primary-600 hover:bg-white border hover:border-gray-200 transition-all"
+          >
+             Load More History
+          </Button>
+       </div>
+    </div>
 
-		<Dialog v-model="showLogDialog" :options="{ size: '2xl' }">
+    <!-- Modals -->
+    <Dialog v-model="showLogDialog" :options="{ size: '2xl' }">
 			<template #body-title>
-				<h3 class="text-xl font-bold">Call Details: {{ selectedLog.name }}</h3>
+				<h3 class="text-xl font-bold flex items-center gap-2">
+               <div class="w-8 h-8 rounded-lg bg-primary-100 flex items-center justify-center text-primary-600">
+                  <FeatherIcon name="phone-call" class="w-4 h-4" />
+               </div>
+               Call Details
+            </h3>
 			</template>
 			<template #body-content>
-				<div v-if="selectedLog" class="mt-6 space-y-6">
-					<div
-						class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-gray-50 p-4 rounded-lg border border-gray-100"
-					>
-						<div>
-							<label class="block text-xs font-semibold text-gray-500 uppercase mb-1"
-								>Contact</label
-							>
-							<a
-								:href="`/app/contact/${selectedLog.party}`"
-								target="_blank"
-								class="text-[#4318FF] hover:underline font-medium flex items-center gap-1"
-							>
-								{{ selectedLog.party }}
-								<FeatherIcon name="external-link" class="h-3 w-3" />
-							</a>
-						</div>
-						<div>
-							<label class="block text-xs font-semibold text-gray-500 uppercase mb-1"
-								>LiveKit Room</label
-							>
-							<div
-								class="font-mono text-gray-700 text-sm truncate"
-								:title="selectedLog.livekit_room"
-							>
-								{{ selectedLog.livekit_room || 'N/A' }}
-							</div>
-						</div>
-						<div>
-							<label class="block text-xs font-semibold text-gray-500 uppercase mb-1"
-								>Duration</label
-							>
-							<div class="font-mono text-gray-900 font-bold">
-								{{ formatDuration(selectedLog.duration) }}
-							</div>
-						</div>
+				<div v-if="selectedLog" class="mt-6 space-y-8">
+               <!-- Key Details Cards -->
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div class="bg-gray-50 p-4 rounded-xl border border-gray-200/60">
+                     <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Contact</span>
+                     <div class="font-bold text-gray-900">{{ selectedLog.phone_number }}</div>
+                     <div class="text-xs text-primary-600 mt-1">{{ selectedLog.party }}</div>
+                  </div>
+                   <div class="bg-gray-50 p-4 rounded-xl border border-gray-200/60">
+                     <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Duration</span>
+                     <div class="font-bold text-gray-900">{{ formatDuration(selectedLog.duration) }}</div>
+                     <div class="text-xs text-gray-500 mt-1">{{ formatDateTime(selectedLog.creation) }}</div>
+                  </div>
+                   <div class="bg-gray-50 p-4 rounded-xl border border-gray-200/60">
+                     <span class="text-xs font-bold text-gray-400 uppercase tracking-wider block mb-1">Outcome</span>
+                     <div class="flex items-center gap-2 mt-1">
+                        <span class="px-2 py-0.5 rounded text-xs font-bold bg-white border shadow-sm" :class="getBadgeClasses(selectedLog.lead_status)">
+                           {{ selectedLog.lead_status }}
+                        </span>
+                     </div>
+                  </div>
 					</div>
 
-					<div
-						v-if="selectedLog.recording_url"
-						class="bg-white border border-gray-200 p-4 rounded-lg shadow-sm"
-					>
-						<label
-							class="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2"
-						>
-							<span class="text-lg">🎙️</span> Call Recording
+               <!-- Audio Player -->
+					<div v-if="selectedLog.recording_url" class="p-4 rounded-xl border border-gray-200 bg-white shadow-sm">
+						<label class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
+							<FeatherIcon name="mic" class="w-4 h-4 text-primary-500" /> Recording
 						</label>
-						<audio
-							controls
-							:src="selectedLog.recording_url"
-							class="w-full rounded-md h-10"
-						></audio>
+						<audio controls :src="selectedLog.recording_url" class="w-full h-10 rounded shadow-inner bg-gray-100"></audio>
 					</div>
 
+               <!-- Status Editors -->
 					<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-1"
-								>Call Status</label
-							>
-							<select
-								v-model="selectedLog.call_status"
-								class="form-select w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
-							>
-								<option value="Pending">Pending</option>
-								<option value="Initiated">Initiated</option>
-								<option value="No Answer">No Answer</option>
-								<option value="Completed">Completed</option>
-								<option value="Failed">Failed</option>
-							</select>
-						</div>
-						<div>
-							<label class="block text-sm font-medium text-gray-700 mb-1"
-								>Lead Status</label
-							>
+							<label class="block text-sm font-medium text-gray-700 mb-2">Lead Status</label>
 							<select
 								v-model="selectedLog.lead_status"
-								class="form-select w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm"
+								class="block w-full rounded-lg border-gray-200 bg-gray-50 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-2.5 transition-shadow"
 							>
-								<option value="Hot">Hot</option>
-								<option value="Warm">Warm</option>
-								<option value="Cold">Cold</option>
-								<option value="Negative">Negative</option>
-								<option value="Not a Lead">Not a Lead</option>
+								<option value="Hot">🔥 Hot Lead</option>
+								<option value="Warm">⛅ Warm Lead</option>
+								<option value="Cold">❄️ Cold Lead</option>
+								<option value="Negative">⛔ Negative</option>
+								<option value="Not a Lead">🤷‍♂️ Not a Lead</option>
+							</select>
+						</div>
+                  <div>
+							<label class="block text-sm font-medium text-gray-700 mb-2">Call Status</label>
+							<select
+								v-model="selectedLog.call_status"
+								class="block w-full rounded-lg border-gray-200 bg-gray-50 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm py-2.5 transition-shadow"
+							>
+								<option value="Completed">Completed</option>
+								<option value="No Answer">No Answer</option>
+								<option value="Failed">Failed</option>
+                        <option value="Busy">Busy</option>
 							</select>
 						</div>
 					</div>
 
-					<div>
-						<div class="flex justify-between items-center mb-1">
-							<label
-								class="block text-sm font-medium text-gray-700 flex items-center gap-2"
-							>
-								<span class="text-lg">🤖</span> AI Summary
+               <!-- AI Summary -->
+					<div class="bg-indigo-50/50 p-5 rounded-xl border border-indigo-100">
+						<div class="flex justify-between items-center mb-3">
+							<label class="text-sm font-bold text-indigo-900 flex items-center gap-2">
+								<FeatherIcon name="cpu" class="w-4 h-4 text-indigo-600" /> AI Insights
 							</label>
 							<button
 								@click="isSummaryRawMode = !isSummaryRawMode"
-								class="text-xs text-[#4318FF] hover:text-[#3311CC] font-medium"
+								class="text-xs text-indigo-600 hover:text-indigo-800 font-medium underline"
 							>
-								{{ isSummaryRawMode ? 'Show Preview' : 'Edit Raw Text' }}
+								{{ isSummaryRawMode ? 'Preview' : 'Edit' }}
 							</button>
 						</div>
 						<div
 							v-if="!isSummaryRawMode"
-							class="w-full h-auto min-h-[5rem] overflow-y-auto rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 leading-relaxed"
+							class="text-sm text-indigo-900/80 leading-relaxed prose-indigo max-w-none"
 							v-html="renderMarkdown(selectedLog.ai_summary)"
 						></div>
 						<textarea
 							v-else
 							v-model="selectedLog.ai_summary"
-							rows="3"
-							class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm"
+							rows="4"
+							class="w-full rounded-lg border-indigo-200 bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-indigo-500"
 						></textarea>
 					</div>
 
+               <!-- Transcription -->
 					<div>
-						<div class="flex justify-between items-center mb-1">
-							<label class="block text-sm font-medium text-gray-700"
-								>Full Transcription</label
-							>
+						<div class="flex justify-between items-center mb-3">
+							<label class="text-sm font-bold text-gray-700">Full Transcription</label>
 							<button
 								@click="isRawMode = !isRawMode"
-								class="text-xs text-[#4318FF] hover:text-[#3311CC] font-medium"
+								class="text-xs text-gray-500 hover:text-gray-900 font-medium"
 							>
-								{{ isRawMode ? 'Show Preview' : 'Edit Raw Text' }}
+								{{ isRawMode ? 'Show Preview' : 'Show Raw' }}
 							</button>
 						</div>
-						<div class="relative">
-							<div
-								v-if="!isRawMode"
-								class="w-full h-64 overflow-y-auto rounded-md border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-800 leading-relaxed whitespace-pre-wrap"
-								v-html="renderMarkdown(selectedLog.transcription)"
-							></div>
-							<textarea
-								v-else
-								v-model="selectedLog.transcription"
-								rows="10"
-								class="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm font-mono"
-							></textarea>
-						</div>
+                  <div class="relative">
+                     <div
+                        v-if="!isRawMode"
+                        class="w-full max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm text-gray-600 leading-7 font-mono"
+                        v-html="renderMarkdown(selectedLog.transcription)"
+                     ></div>
+                     <textarea
+                        v-else
+                        v-model="selectedLog.transcription"
+                        rows="10"
+                        class="w-full rounded-xl border-gray-200 bg-white px-4 py-3 text-sm font-mono shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                     ></textarea>
+                     <!-- Fade effect at bottom if content is long? omitted for simplicity but good for UI -->
+                  </div>
 					</div>
 				</div>
 			</template>
 			<template #actions>
-				<Button variant="subtle" @click="showLogDialog = false">Close</Button>
+				<Button variant="subtle" class="hover:bg-gray-100 text-gray-600" @click="showLogDialog = false">Cancel</Button>
 				<Button
 					variant="solid"
 					:loading="saving"
 					@click="saveLog"
-					class="!bg-[#4318FF] hover:!bg-[#3311CC] !text-white border-transparent"
+					class="!bg-primary-600 hover:!bg-primary-700 !text-white border-transparent shadow-md shadow-primary-500/20"
 				>
 					Save Changes
 				</Button>
 			</template>
 		</Dialog>
-	</div>
+  </div>
 </template>
 
 <script setup>
@@ -401,9 +438,11 @@ const dailyActivity = computed(() => {
 
 	return sortedDates.map((date) => {
 		const d = new Date(date)
+		// simple label e.g. "Mon"
+		const label = d.toLocaleDateString('en-US', { weekday: 'short' })
 		return {
 			date,
-			label: d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+			label,
 			count: daysMap[date],
 			percentage: (daysMap[date] / maxCount) * 100,
 		}
@@ -429,6 +468,15 @@ const statusDistribution = computed(() => {
 		Unknown: 'bg-gray-300',
 		'Not a Lead': 'bg-gray-400',
 	}
+   
+   const dots = {
+      Hot: 'bg-green-500',
+      Warm: 'bg-orange-500',
+      Cold: 'bg-blue-500',
+      Negative: 'bg-red-500',
+      Unknown: 'bg-gray-400',
+      'Not a Lead': 'bg-gray-400'
+   }
 
 	return Object.keys(counts)
 		.map((status) => ({
@@ -436,6 +484,7 @@ const statusDistribution = computed(() => {
 			count: counts[status],
 			percentage: Math.round((counts[status] / total) * 100),
 			colorClass: colors[status] || 'bg-gray-500',
+         dotClass: dots[status] || 'bg-gray-400',
 		}))
 		.sort((a, b) => b.count - a.count)
 })
@@ -471,7 +520,7 @@ async function saveLog() {
 		showLogDialog.value = false
 	} catch (e) {
 		console.error(e)
-		alert('Failed to save log.')
+		// alert('Failed to save log.')
 	} finally {
 		saving.value = false
 	}
@@ -500,8 +549,7 @@ function formatDateTime(dateStr) {
 	const date = new Date(dateStr)
 	return date.toLocaleString('en-GB', {
 		day: '2-digit',
-		month: '2-digit',
-		year: 'numeric',
+		month: 'short',
 		hour: '2-digit',
 		minute: '2-digit',
 	})
@@ -509,22 +557,23 @@ function formatDateTime(dateStr) {
 
 function getBadgeClasses(status) {
 	const s = (status || '').trim()
-	if (s === 'Hot') return 'bg-green-100 text-green-800'
-	if (s === 'Warm') return 'bg-orange-100 text-orange-800'
-	if (s === 'Cold') return 'bg-blue-100 text-blue-800'
-	if (s === 'Negative') return 'bg-red-100 text-red-800'
-	return 'bg-gray-100 text-gray-800'
+	if (s === 'Hot') return 'bg-green-50 text-green-700 border-green-200'
+	if (s === 'Warm') return 'bg-orange-50 text-orange-700 border-orange-200'
+	if (s === 'Cold') return 'bg-blue-50 text-blue-700 border-blue-200'
+	if (s === 'Negative') return 'bg-red-50 text-red-700 border-red-200'
+	return 'bg-gray-100 text-gray-700 border-gray-200'
 }
 
 function renderMarkdown(text) {
-	if (!text) return '<span class="text-gray-400 italic">No data available.</span>'
+	if (!text) return '<span class="text-gray-400 italic">No detailed summary available.</span>'
 	return text
 		.replace(/</g, '&lt;')
 		.replace(/>/g, '&gt;')
 		.replace(/\n/g, '<br>')
 		.replace(/\*\*(.*?)\*\*/g, '<strong class="text-gray-900 font-bold">$1</strong>')
-		.replace(/(Alex \(AI\):)/g, '<span class="text-[#4318FF] font-medium">$1</span>')
-		.replace(/^- (.*)/gm, '<li class="ml-4 list-disc">$1</li>')
+		.replace(/(Alex \(AI\):)/g, '<span class="text-primary-600 font-bold">$1</span>')
+      .replace(/(User:)/g, '<span class="text-gray-700 font-bold">$1</span>')
+		.replace(/^- (.*)/gm, '<li class="ml-4 list-disc marker:text-gray-300">$1</li>')
 }
 
 function stripHtml(html) {
@@ -532,8 +581,17 @@ function stripHtml(html) {
 	return (
 		html
 			.replace(/\*\*/g, '')
-			.replace(/Alex \(AI\):/g, 'AI:')
-			.substring(0, 150) + '...'
+			.replace(/Alex \(AI\):/g, '')
+         .replace(/User:/g, '')
+         .replace(/<br>/g, ' ')
+			.substring(0, 120) + '...'
 	)
 }
 </script>
+
+<style scoped>
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+</style>

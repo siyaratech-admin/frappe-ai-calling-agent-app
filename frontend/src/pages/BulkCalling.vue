@@ -1,307 +1,348 @@
 <template>
-	<div class="p-8 max-w-7xl mx-auto h-full flex flex-col">
-		<div class="flex justify-between items-center mb-8">
-			<div>
-				<h1 class="text-3xl font-bold text-gray-900">Bulk Calling</h1>
-				<p class="text-gray-600 mt-1">Create groups and trigger AI campaigns</p>
-			</div>
-			<Button
-				v-if="groups.data && groups.data.length > 0"
-				variant="solid"
-				class="!bg-[#4318FF] hover:!bg-[#3311CC] !text-white border-transparent"
-				@click="openCreateDialog"
-			>
-				<template #prefix><FeatherIcon name="plus" class="h-4 w-4" /></template>
-				New Group
-			</Button>
-		</div>
+  <div class="max-w-7xl mx-auto space-y-6">
+    <!-- Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 tracking-tight">Bulk Calling</h1>
+        <p class="text-sm text-gray-500 mt-1">Organize contacts into groups and launch AI calling campaigns.</p>
+      </div>
+      <div>
+        <Button
+          v-if="groups.data && groups.data.length > 0"
+          variant="solid"
+          class="!bg-primary-600 hover:!bg-primary-700 !text-white !rounded-xl shadow-lg shadow-primary-500/20"
+          @click="openCreateDialog"
+        >
+          <template #prefix><FeatherIcon name="plus" class="h-4 w-4" /></template>
+          Create New Group
+        </Button>
+      </div>
+    </header>
 
-		<div v-if="groups.loading" class="flex-1 flex items-center justify-center">
-			<div class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4318FF]"></div>
-		</div>
+    <!-- Loading State -->
+    <div v-if="groups.loading" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+       <div v-for="i in 3" :key="i" class="h-48 bg-white rounded-2xl border border-gray-100 shadow-sm animate-pulse"></div>
+    </div>
 
-		<div
-			v-else-if="!groups.data || groups.data.length === 0"
-			class="flex-1 flex flex-col items-center justify-center text-center opacity-80"
-		>
-			<div class="bg-gray-50 p-6 rounded-full mb-4">
-				<FeatherIcon name="layers" class="h-10 w-10 text-gray-400" />
-			</div>
-			<h3 class="text-xl font-bold text-gray-900">No groups found</h3>
-			<p class="text-gray-500 max-w-sm mt-2 mb-6">
-				Create your first contact group to start a bulk calling campaign.
-			</p>
-			<Button
-				variant="solid"
-				size="lg"
-				class="!bg-[#4318FF] hover:!bg-[#3311CC] !text-white border-transparent"
-				@click="openCreateDialog"
-			>
-				<template #prefix><FeatherIcon name="plus" class="h-4 w-4" /></template>
-				Create Group
-			</Button>
-		</div>
+    <!-- Empty State -->
+    <div
+      v-else-if="!groups.data || groups.data.length === 0"
+      class="flex flex-col items-center justify-center text-center py-20 bg-white rounded-2xl border border-gray-200 shadow-sm"
+    >
+      <div class="w-20 h-20 bg-primary-50 rounded-full flex items-center justify-center mb-6">
+        <FeatherIcon name="layers" class="h-10 w-10 text-primary-300" />
+      </div>
+      <h3 class="text-xl font-bold text-gray-900">No Groups Created Yet</h3>
+      <p class="text-gray-500 max-w-sm mt-2 mb-8 mx-auto">
+        Groups allow you to target specific segments of your contacts for bulk calling.
+      </p>
+      <Button
+        variant="solid"
+        size="lg"
+        class="!bg-primary-600 hover:!bg-primary-700 !text-white !rounded-xl shadow-lg shadow-primary-500/30"
+        @click="openCreateDialog"
+      >
+        <template #prefix><FeatherIcon name="plus" class="h-4 w-4" /></template>
+        Create Your First Group
+      </Button>
+    </div>
 
-		<div v-else class="grid grid-cols-1 md:grid-cols-3 gap-6">
-			<div
-				v-for="group in groups.data"
-				:key="group.name"
-				class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between group cursor-pointer"
-				@click="openGroupDetails(group)"
-			>
-				<div>
-					<div class="flex justify-between items-start mb-2">
-						<h3
-							class="font-bold text-lg text-gray-900 group-hover:text-[#4318FF] transition-colors"
-						>
-							{{ group.title }}
-						</h3>
-						<FeatherIcon name="more-horizontal" class="h-5 w-5 text-gray-400" />
-					</div>
-					<p class="text-xs text-gray-500 font-medium">
-						Created on {{ formatDate(group.creation) }}
-					</p>
+    <!-- Groups Grid -->
+    <div v-else class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div
+        v-for="group in groups.data"
+        :key="group.name"
+        class="group bg-white p-6 rounded-2xl border border-gray-200 shadow-sm hover:shadow-lg hover:border-primary-200 hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col justify-between relative overflow-hidden"
+        @click="openGroupDetails(group)"
+      >
+         <div class="absolute top-0 right-0 w-24 h-24 bg-primary-50 rounded-bl-full -mr-6 -mt-6 transition-transform group-hover:scale-110"></div>
+         
+        <div class="relative z-10">
+          <div class="flex justify-between items-start mb-4">
+             <div class="p-2.5 bg-gray-50 rounded-xl group-hover:bg-white group-hover:shadow-sm transition-all text-gray-500 group-hover:text-primary-600">
+                <FeatherIcon name="folder" class="h-5 w-5" />
+             </div>
+          </div>
+          
+          <h3 class="font-bold text-lg text-gray-900 group-hover:text-primary-600 transition-colors mb-1 truncate pr-4">
+            {{ group.title }}
+          </h3>
+          <p class="text-xs text-gray-400 font-medium">
+            Created {{ formatDate(group.creation) }}
+          </p>
 
-					<div class="mt-4 flex -space-x-2 overflow-hidden">
-						<div
-							class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500"
-						>
-							#
-						</div>
-						<div
-							class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-[#4318FF]/10 flex items-center justify-center text-xs font-bold text-[#4318FF]"
-						>
-							AI
-						</div>
-						<div
-							class="inline-block h-8 w-8 rounded-full ring-2 ring-white bg-gray-50 flex items-center justify-center text-xs text-gray-400"
-						>
-							<FeatherIcon name="users" class="h-3 w-3" />
-						</div>
-					</div>
-				</div>
+          <div class="mt-6 flex items-center gap-4">
+             <div class="flex -space-x-3 overflow-hidden">
+                <div class="w-8 h-8 rounded-full border-2 border-white bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-400">#1</div>
+                <div class="w-8 h-8 rounded-full border-2 border-white bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">#2</div>
+                 <div class="w-8 h-8 rounded-full border-2 border-white bg-primary-100 flex items-center justify-center text-xs font-bold text-primary-600">
+                    <FeatherIcon name="users" class="w-3 h-3" />
+                 </div>
+             </div>
+             <span class="text-xs font-semibold text-gray-500 group-hover:text-primary-600 transition-colors">View Members</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-				<div class="mt-6 flex items-center justify-between border-t border-gray-100 pt-4">
-					<span class="text-xs font-semibold text-gray-500">Click to view details</span>
-					<FeatherIcon
-						name="arrow-right"
-						class="h-4 w-4 text-[#4318FF] opacity-0 group-hover:opacity-100 transition-opacity"
-					/>
-				</div>
-			</div>
-		</div>
+    <!-- Create Group Wizard -->
+    <Dialog v-model="showCreateDialog" :options="{ size: 'xl' }">
+      <template #body-title>
+        <div class="flex items-center gap-3">
+           <div class="flex items-center justify-center w-8 h-8 rounded-full bg-primary-100 text-primary-600 font-bold text-sm border-2 border-white shadow-sm">
+              {{ createStep }}
+           </div>
+           <h3 class="text-xl font-bold text-gray-900">
+              {{ createStep === 1 ? 'Name Your Group' : 'Add Members' }}
+           </h3>
+        </div>
+      </template>
+      <template #body-content>
+        <div class="mt-6 min-h-[400px]">
+           <!-- Step 1: Naming -->
+          <div v-if="createStep === 1" class="flex flex-col items-center justify-center h-full py-12">
+             <div class="w-16 h-16 bg-gradient-to-br from-primary-100 to-indigo-50 rounded-2xl flex items-center justify-center mb-6 shadow-inner">
+                <FeatherIcon name="edit-3" class="w-8 h-8 text-primary-600" />
+             </div>
+            <div class="w-full max-w-md space-y-4">
+              <label class="block text-sm font-bold text-gray-700 text-center uppercase tracking-wider">Group Title</label>
+              <input
+                v-model="newGroupTitle"
+                type="text"
+                placeholder="e.g. Q4 Sales Outreach"
+                class="block w-full rounded-xl border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-lg py-3 px-4 text-center transition-shadow"
+                autofocus
+                @keydown.enter="createStep = 2"
+              />
+              <p class="text-xs text-gray-400 text-center">Give your group a descriptive name to easily identify it later.</p>
+            </div>
+          </div>
 
-		<Dialog v-model="showCreateDialog" :options="{ size: 'xl' }">
-			<template #body-title>
-				<h3 class="text-xl font-bold">
-					{{ createStep === 1 ? 'Name Your Group' : 'Add Members' }}
-				</h3>
-			</template>
-			<template #body-content>
-				<div v-if="createStep === 1" class="mt-4 space-y-4">
-					<p class="text-sm text-gray-600">Give your new contact group a clear name.</p>
-					<div class="space-y-1">
-						<label class="block text-sm font-medium text-gray-700">Group Title</label>
-						<input
-							v-model="newGroupTitle"
-							type="text"
-							placeholder="e.g. Real Estate Leads - Oct"
-							class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#4318FF] focus:ring-[#4318FF] sm:text-sm px-3 py-2 border"
-						/>
-					</div>
-				</div>
+          <!-- Step 2: Selection -->
+          <div v-if="createStep === 2" class="flex flex-col h-[500px]">
+            <div class="mb-4 relative">
+               <FeatherIcon name="search" class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                v-model="contactSearch"
+                type="text"
+                placeholder="Search by name or phone..."
+                class="block w-full pl-9 pr-4 py-2.5 rounded-xl border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm transition-shadow"
+              />
+            </div>
 
-				<div v-if="createStep === 2" class="mt-4 flex flex-col h-[50vh]">
-					<div class="mb-4">
-						<input
-							v-model="contactSearch"
-							type="text"
-							placeholder="Search contacts..."
-							class="block w-full rounded-md border-gray-300 shadow-sm focus:border-[#4318FF] focus:ring-[#4318FF] sm:text-sm px-3 py-2 border"
-						/>
-					</div>
+            <div class="flex-1 overflow-hidden border border-gray-200 rounded-xl bg-white flex flex-col">
+              <div v-if="contacts.loading" class="p-8 text-center text-gray-500">
+                <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-600 mx-auto mb-2"></div>
+                Loading contacts...
+              </div>
+              <div
+                v-else-if="filteredContacts.length === 0"
+                class="flex-1 flex flex-col items-center justify-center text-gray-400 p-8"
+              >
+                <FeatherIcon name="users" class="w-8 h-8 mb-2 opacity-50" />
+                No contacts found matching your search.
+              </div>
 
-					<div class="flex-1 overflow-y-auto border border-gray-200 rounded-lg">
-						<div v-if="contacts.loading" class="p-4 text-center text-gray-500">
-							Loading contacts...
-						</div>
-						<div
-							v-else-if="filteredContacts.length === 0"
-							class="p-4 text-center text-gray-500"
-						>
-							No contacts found
-						</div>
+              <div v-else class="flex-1 overflow-y-auto custom-scrollbar">
+                <table class="min-w-full divide-y divide-gray-100">
+                  <thead class="bg-gray-50 sticky top-0 z-10">
+                    <tr>
+                      <th scope="col" class="px-6 py-3 text-left w-10 bg-gray-50">
+                        <input
+                          type="checkbox"
+                          :checked="isAllSelected"
+                          @change="toggleAllSelection"
+                          class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                        />
+                      </th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Name</th>
+                      <th scope="col" class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider bg-gray-50">Phone</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-100">
+                    <tr
+                      v-for="contact in filteredContacts"
+                      :key="contact.name"
+                      class="hover:bg-gray-50 cursor-pointer transition-colors"
+                      @click="toggleSelection(contact)"
+                    >
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <input
+                          type="checkbox"
+                          :checked="selectedContacts.has(contact.name)"
+                          class="rounded border-gray-300 text-primary-600 focus:ring-primary-500 pointer-events-none"
+                        />
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                         <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
+                               {{ getInitials(contact.first_name) }}
+                            </div>
+                            <div class="font-medium text-gray-900">{{ contact.first_name }} {{ contact.last_name }}</div>
+                         </div>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                        {{ contact.mobile_no || contact.phone }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div class="mt-3 flex justify-between items-center text-sm">
+               <span class="text-gray-500">Select contacts to include in this group.</span>
+               <span class="font-bold text-primary-600 bg-primary-50 px-3 py-1 rounded-full border border-primary-100">
+                  {{ selectedContacts.size }} Selected
+               </span>
+            </div>
+          </div>
+        </div>
+      </template>
+      <template #actions>
+        <div class="flex w-full justify-between items-center">
+          <div>
+            <Button v-if="createStep === 2" variant="outline" @click="createStep = 1">Back</Button>
+          </div>
+          <div class="flex items-center gap-3">
+            <Button
+              v-if="createStep === 1"
+              variant="solid"
+              class="!bg-primary-600 hover:!bg-primary-700 !text-white !rounded-lg px-6"
+              :disabled="!newGroupTitle"
+              @click="createStep = 2"
+            >
+               <div class="flex items-center gap-2">
+                  Next Step <FeatherIcon name="arrow-right" class="w-4 h-4" />
+               </div>
+            </Button>
+            <Button
+              v-if="createStep === 2"
+              variant="solid"
+              class="!bg-primary-600 hover:!bg-primary-700 !text-white !rounded-lg px-6"
+              :disabled="selectedContacts.size === 0"
+              :loading="creating"
+              @click="createGroup"
+            >
+               <div class="flex items-center gap-2">
+                  Create Group <FeatherIcon name="check" class="w-4 h-4" />
+               </div>
+            </Button>
+            <Button variant="subtle" @click="closeCreateDialog" class="hover:bg-gray-200">Cancel</Button>
+          </div>
+        </div>
+      </template>
+    </Dialog>
 
-						<table v-else class="min-w-full divide-y divide-gray-200">
-							<thead class="bg-gray-50 sticky top-0">
-								<tr>
-									<th
-										scope="col"
-										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-10"
-									>
-										<input
-											type="checkbox"
-											:checked="isAllSelected"
-											@change="toggleAllSelection"
-											class="rounded border-gray-300 text-[#4318FF] focus:ring-[#4318FF]"
-										/>
-									</th>
-									<th
-										scope="col"
-										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-									>
-										Name
-									</th>
-									<th
-										scope="col"
-										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-									>
-										Phone
-									</th>
-								</tr>
-							</thead>
-							<tbody class="bg-white divide-y divide-gray-200">
-								<tr
-									v-for="contact in filteredContacts"
-									:key="contact.name"
-									class="hover:bg-gray-50 cursor-pointer"
-									@click="toggleSelection(contact)"
-								>
-									<td class="px-6 py-4 whitespace-nowrap">
-										<input
-											type="checkbox"
-											:checked="selectedContacts.has(contact.name)"
-											class="rounded border-gray-300 text-[#4318FF] focus:ring-[#4318FF] pointer-events-none"
-										/>
-									</td>
-									<td
-										class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900"
-									>
-										{{ contact.first_name }} {{ contact.last_name }}
-									</td>
-									<td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-										{{ contact.mobile_no || contact.phone }}
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-					<div class="mt-2 text-sm text-gray-500 text-right">
-						{{ selectedContacts.size }} contacts selected
-					</div>
-				</div>
-			</template>
-			<template #actions>
-				<div class="flex w-full justify-between">
-					<Button variant="subtle" @click="closeCreateDialog">Cancel</Button>
-					<div class="flex gap-2">
-						<Button v-if="createStep === 2" variant="outline" @click="createStep = 1"
-							>Back</Button
-						>
-						<Button
-							v-if="createStep === 1"
-							variant="solid"
-							class="!bg-[#4318FF] !text-white"
-							:disabled="!newGroupTitle"
-							@click="createStep = 2"
-						>
-							Next
-						</Button>
-						<Button
-							v-if="createStep === 2"
-							variant="solid"
-							class="!bg-[#4318FF] !text-white"
-							:disabled="selectedContacts.size === 0"
-							:loading="creating"
-							@click="createGroup"
-						>
-							Create Group
-						</Button>
-					</div>
-				</div>
-			</template>
-		</Dialog>
+    <!-- Group Details & Action Modal -->
+    <Dialog v-model="showDetailsDialog" :options="{ size: '2xl' }">
+      <template #body-title>
+         <div class="flex items-center gap-3">
+            <div class="p-2 bg-primary-50 text-primary-600 rounded-lg">
+               <FeatherIcon name="folder" class="w-5 h-5" />
+            </div>
+            <div>
+               <h3 class="text-xl font-bold text-gray-900">{{ selectedGroup?.title }}</h3>
+               <p class="text-xs text-gray-500 font-normal mt-0.5">{{ groupMembers.length }} Members</p>
+            </div>
+         </div>
+      </template>
+      <template #body-content>
+        <div class="mt-6 flex flex-col h-[500px]">
+           
+           <div class="bg-blue-50 border border-blue-100 rounded-xl p-4 mb-4 flex items-start gap-3">
+              <FeatherIcon name="info" class="w-5 h-5 text-blue-600 mt-0.5 shrink-0" />
+              <div>
+                 <h4 class="font-bold text-blue-900 text-sm">Target Audience</h4>
+                 <p class="text-sm text-blue-700 mt-1">Review the list below. Clicking "Start Bulk Calling" will queue calls for all valid numbers in this group.</p>
+              </div>
+           </div>
 
-		<Dialog v-model="showDetailsDialog" :options="{ size: '2xl' }">
-			<template #body-title>
-				<div class="flex justify-between items-center w-full pr-8">
-					<h3 class="text-xl font-bold">{{ selectedGroup?.title }}</h3>
-					<Badge theme="gray" size="lg">{{ groupMembers.length }} Members</Badge>
-				</div>
-			</template>
-			<template #body-content>
-				<div class="mt-4 h-[50vh] flex flex-col">
-					<div class="flex-1 overflow-y-auto border border-gray-200 rounded-lg">
-						<div v-if="detailsLoading" class="p-6 text-center text-gray-500">
-							Loading members...
-						</div>
-						<table v-else class="min-w-full divide-y divide-gray-200">
-							<thead class="bg-gray-50 sticky top-0">
-								<tr>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
-									>
-										Contact Name
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
-									>
-										Phone
-									</th>
-									<th
-										class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase"
-									>
-										Status
-									</th>
-								</tr>
-							</thead>
-							<tbody class="bg-white divide-y divide-gray-200">
-								<tr v-for="member in groupMembers" :key="member.name">
-									<td class="px-6 py-4 text-sm font-medium text-gray-900">
-										{{ member.contact_name }}
-									</td>
-									<td class="px-6 py-4 text-sm text-gray-500 font-mono">
-										{{ member.phone_number }}
-									</td>
-									<td class="px-6 py-4 text-sm text-gray-500">
-										<Badge theme="gray">Pending</Badge>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</template>
-			<template #actions>
-				<div class="flex w-full justify-between items-center">
-					<Button
-						variant="ghost"
-						theme="red"
-						class="text-red-600 hover:bg-red-50"
-						@click="deleteGroup"
-					>
-						<template #prefix><FeatherIcon name="trash-2" class="h-4 w-4" /></template>
-						Delete Group
-					</Button>
+          <div class="flex-1 overflow-hidden border border-gray-200 rounded-xl bg-white flex flex-col">
+            <div v-if="detailsLoading" class="p-8 text-center text-gray-500 flex flex-col items-center justify-center h-full">
+              <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mb-2"></div>
+              Loading members...
+            </div>
+             
+             <div v-else class="flex-1 overflow-y-auto overflow-x-auto custom-scrollbar">
+                <table class="min-w-full divide-y divide-gray-100">
+                  <thead class="bg-gray-50 sticky top-0">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Contact Name</th>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Phone</th>
+                      <th class="px-6 py-3 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-100">
+                    <tr v-for="member in groupMembers" :key="member.name" class="hover:bg-gray-50">
+                      <td class="px-6 py-4 text-sm font-medium text-gray-900">
+                         <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 border border-white shadow-sm">
+                               {{ getInitials(member.contact_name) }}
+                            </div>
+                            {{ member.contact_name }}
+                         </div>
+                      </td>
+                      <td class="px-6 py-4 text-sm text-gray-500 font-mono">{{ member.phone_number }}</td>
+                      <td class="px-6 py-4 text-sm">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-gray-100 text-gray-600">Pending</span>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+             </div>
+          </div>
+        </div>
+      </template>
+      <template #actions>
+        <div class="flex w-full justify-between items-center bg-white pt-2">
+          <Button
+            variant="ghost"
+            theme="red"
+            class="text-red-600 hover:bg-red-50 hover:border-red-100 border border-transparent"
+            @click="deleteGroup"
+          >
+           <template #prefix><FeatherIcon name="trash-2" class="h-4 w-4" /></template>
+            Delete Group
+          </Button>
 
-					<div class="flex gap-2">
-						<Button variant="subtle" @click="showDetailsDialog = false">Close</Button>
-						<Button
-							variant="solid"
-							class="!bg-[#4318FF] hover:!bg-[#3311CC] !text-white border-transparent"
-							:loading="triggering"
-							@click="startBulkCall"
-						>
-							<template #prefix
-								><FeatherIcon name="phone-call" class="h-4 w-4"
-							/></template>
-							Start Bulk Calling
-						</Button>
-					</div>
-				</div>
-			</template>
-		</Dialog>
-	</div>
+          <div class="flex gap-3">
+            <Button variant="subtle" @click="showDetailsDialog = false">Close</Button>
+            <Button
+              variant="solid"
+              class="!bg-primary-600 hover:!bg-primary-700 !text-white !rounded-lg shadow-lg shadow-primary-500/30 pl-4 pr-5"
+              :loading="triggering"
+              @click="startBulkCall"
+            >
+              <template #prefix><FeatherIcon name="phone-call" class="h-4 w-4" /></template>
+              Start Bulk Calling
+            </Button>
+          </div>
+        </div>
+      </template>
+    </Dialog>
+    <!-- Notification Toast -->
+    <transition name="slide-fade">
+      <div
+        v-if="toast.show"
+        class="fixed bottom-6 right-6 z-50 flex items-center gap-4 px-5 py-4 bg-white rounded-xl shadow-2xl border border-gray-100 max-w-md transform transition-all"
+        :class="toast.type === 'success' ? 'border-l-4 border-l-green-500' : 'border-l-4 border-l-red-500'"
+      >
+        <div
+          class="flex items-center justify-center w-10 h-10 rounded-full shrink-0"
+          :class="toast.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'"
+        >
+          <FeatherIcon :name="toast.type === 'success' ? 'check' : 'alert-circle'" class="h-5 w-5" />
+        </div>
+        <div>
+          <h4 class="text-sm font-bold text-gray-900">{{ toast.title }}</h4>
+          <p class="text-xs text-gray-500 mt-0.5 leading-relaxed">{{ toast.message }}</p>
+        </div>
+        <button @click="toast.show = false" class="text-gray-400 hover:text-gray-600 ml-2">
+           <FeatherIcon name="x" class="w-4 h-4" />
+        </button>
+      </div>
+    </transition>
+  </div>
 </template>
 
 <script setup>
@@ -322,15 +363,20 @@ const groupMembers = ref([])
 const detailsLoading = ref(false)
 const triggering = ref(false)
 
-// --- RESOURCES ---
+// Toast State
+const toast = ref({
+	show: false,
+	title: '',
+	message: '',
+	type: 'success', // 'success' or 'error'
+})
 
-// 1. Fetch Groups (FIXED: Uses single path)
+// --- RESOURCES ---
 const groups = createResource({
 	url: 'ai_calling_agent.api.get_call_groups',
 	auto: true,
 })
 
-// 2. Fetch Contacts
 const contacts = createResource({
 	url: 'frappe.client.get_list',
 	makeParams() {
@@ -343,7 +389,6 @@ const contacts = createResource({
 })
 
 // --- COMPUTED ---
-
 const filteredContacts = computed(() => {
 	if (!contacts.data) return []
 	const search = contactSearch.value.toLowerCase()
@@ -364,7 +409,14 @@ const isAllSelected = computed(() => {
 	)
 })
 
-// --- ACTIONS: CREATE GROUP ---
+// --- ACTIONS ---
+
+function showToast(title, message, type = 'success') {
+	toast.value = { show: true, title, message, type }
+	setTimeout(() => {
+		toast.value.show = false
+	}, 4000)
+}
 
 function openCreateDialog() {
 	newGroupTitle.value = ''
@@ -394,9 +446,22 @@ function toggleAllSelection() {
 	}
 }
 
+function getInitials(name) {
+   if(!name) return '?'
+   return name.substring(0, 1).toUpperCase()
+}
+
+function formatDate(dateStr) {
+	if (!dateStr) return ''
+	return new Date(dateStr).toLocaleDateString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+   })
+}
+
 async function createGroup() {
 	creating.value = true
-
 	const memberList = []
 	selectedContacts.value.forEach((docName) => {
 		const contact = contacts.data.find((c) => c.name === docName)
@@ -409,7 +474,6 @@ async function createGroup() {
 	})
 
 	try {
-		// FIXED: Uses single path
 		const res = await fetch('/api/method/ai_calling_agent.api.create_call_group', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
@@ -423,18 +487,17 @@ async function createGroup() {
 		if (res.ok) {
 			groups.fetch()
 			showCreateDialog.value = false
+         showToast('Success', 'Call Group created successfully!', 'success')
 		} else {
-			alert(data.message || 'Error creating group')
+			showToast('Error', data.message || 'Error creating group', 'error')
 		}
 	} catch (e) {
 		console.error(e)
-		alert('Failed to create group')
+		showToast('Error', 'Failed to create group', 'error')
 	} finally {
 		creating.value = false
 	}
 }
-
-// --- ACTIONS: DETAILS & BULK CALL ---
 
 async function openGroupDetails(group) {
 	selectedGroup.value = group
@@ -450,6 +513,7 @@ async function openGroupDetails(group) {
 		}
 	} catch (e) {
 		console.error(e)
+        showToast('Error', 'Failed to load group details', 'error')
 	} finally {
 		detailsLoading.value = false
 	}
@@ -457,59 +521,64 @@ async function openGroupDetails(group) {
 
 async function startBulkCall() {
 	if (!selectedGroup.value) return
-
-	if (
-		!confirm(
-			`Are you sure you want to call all ${groupMembers.value.length} members in this group?`
-		)
-	)
-		return
+	if (!confirm(`Are you sure you want to call all ${groupMembers.value.length} members in this group?`)) return
 
 	triggering.value = true
 	try {
-		// FIXED: Uses single path
 		const res = await fetch('/api/method/ai_calling_agent.api.trigger_bulk_call', {
 			method: 'POST',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify({
-				group_name: selectedGroup.value.name,
-			}),
+			body: JSON.stringify({ group_name: selectedGroup.value.name }),
 		})
 
 		const data = await res.json()
 		if (res.ok) {
-			alert('Bulk call campaign started successfully! Logs will appear in the dashboard.')
+			showToast('Campaign Started', 'Bulk call campaign started successfully! Logs will appear in the dashboard.', 'success')
 			showDetailsDialog.value = false
 		} else {
-			alert(data.message || 'Failed to start bulk call')
+			showToast('Error', data.message || 'Failed to start bulk call', 'error')
 		}
 	} catch (e) {
 		console.error(e)
-		alert('An error occurred')
+		showToast('Error', 'An error occurred', 'error')
 	} finally {
 		triggering.value = false
 	}
 }
 
 async function deleteGroup() {
-	if (!confirm('Are you sure you want to delete this group? This action cannot be undone.'))
-		return
-
+	if (!confirm('Are you sure you want to delete this group? This action cannot be undone.')) return
 	try {
-		await fetch(`/api/resource/Call Group/${selectedGroup.value.name}`, {
-			method: 'DELETE',
-		})
+		await fetch(`/api/resource/Call Group/${selectedGroup.value.name}`, { method: 'DELETE' })
 		groups.fetch()
 		showDetailsDialog.value = false
+        showToast('Deleted', 'Group deleted successfully', 'success')
 	} catch (e) {
 		console.error(e)
-		alert('Failed to delete group')
+		showToast('Error', 'Failed to delete group', 'error')
 	}
 }
-
-// --- HELPER ---
-function formatDate(dateStr) {
-	if (!dateStr) return ''
-	return new Date(dateStr).toLocaleDateString()
-}
 </script>
+
+<style scoped>
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #e5e7eb;
+  border-radius: 4px;
+}
+.slide-fade-enter-active,
+.slide-fade-leave-active {
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.slide-fade-enter-from,
+.slide-fade-leave-to {
+  transform: translateY(20px);
+  opacity: 0;
+}
+</style>

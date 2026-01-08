@@ -10,19 +10,14 @@ import time
 # This is the async helper function that does the real work.
 # We need this because Frappe's main hooks are synchronous, 
 # but the livekit-api library is asynchronous (async/await).
-async def _initiate_livekit_call(phone_number, contact_docname, agent_name, room_name, outbound_trunk_id, metadata_json):
+async def _initiate_livekit_call(phone_number, contact_docname, agent_name, room_name, outbound_trunk_id, metadata_json, lk_url, lk_api_key, lk_api_secret):
     """
     Uses the LiveKit API to create a room, dispatch an agent,
     and start an outbound SIP call.
     """
     
-    # Get credentials from frappe.conf (which reads site_config.json)
-    lk_url = frappe.conf.get("livekit_url")
-    lk_api_key = frappe.conf.get("livekit_api_key")
-    lk_api_secret = frappe.conf.get("livekit_api_secret")
-
-    # The LiveKitAPI client reads credentials from environment variables.
-    # We'll set them just for this process.
+    # The LiveKitAPI client reads credentials from environment variables by default.
+    # We set them temporarily for this process using the values passed from the main function.
     os.environ["LIVEKIT_URL"] = lk_url
     os.environ["LIVEKIT_API_KEY"] = lk_api_key
     os.environ["LIVEKIT_API_SECRET"] = lk_api_secret
@@ -95,9 +90,21 @@ def start_ai_call(phone_number=None, contact_docname=None, party_type="Contact")
                 # For now, we will proceed, but it might fail if strict validation is on.
                 frappe.log_error(f"Could not find Contact ID for {contact_docname} ({phone_number})", "AI Call Warning")
 
-        # Get config
-        outbound_trunk_id = frappe.conf.get("livekit_outbound_trunk_id")
-        agent_name = "sales-sdr-agent"
+        # ---------------------------------------------------------------
+        # UPDATED: Fetch Credentials from 'AI Agent Settings' DocType
+        # ---------------------------------------------------------------
+        settings = frappe.get_single("AI Agent Settings")
+        
+        lk_url = settings.livekit_url
+        lk_api_key = settings.livekit_api_key
+        lk_api_secret = settings.get_password("livekit_api_secret")
+        outbound_trunk_id = settings.livekit_outbound_trunk_id
+
+        # Validate that settings exist
+        if not all([lk_url, lk_api_key, lk_api_secret, outbound_trunk_id]):
+            frappe.throw("LiveKit credentials are missing. Please configure them in 'AI Agent Settings'.")
+
+        agent_name = "sales-sdr-agent" # You could also make this configurable if you want
         room_name = f"frappe-call-{uuid.uuid4()}"
 
         # Create a new "AI Call Log" document
@@ -123,7 +130,10 @@ def start_ai_call(phone_number=None, contact_docname=None, party_type="Contact")
             agent_name=agent_name,
             room_name=room_name,
             outbound_trunk_id=outbound_trunk_id,
-            metadata_json=metadata_to_pass
+            metadata_json=metadata_to_pass,
+            lk_url=lk_url,               # Passed down
+            lk_api_key=lk_api_key,       # Passed down
+            lk_api_secret=lk_api_secret  # Passed down
         ))
 
         return {
@@ -451,13 +461,10 @@ def process_bulk_queue(member_list):
             time.sleep(2) 
             
             # Trigger the actual call
-            # You might need to adjust start_ai_call to accept direct args if it currently only takes HTTP args
-            # Or just use the logic inside it here.
-            
-            # Simulating the call trigger:
+            # We must pass arguments directly to start_ai_call now
             frappe.call('ai_calling_agent.api.start_ai_call', 
                         phone_number=phone, 
-                        contact_docname=name) # Or however your function expects it
+                        contact_docname=name) 
             
             success_count += 1
             
@@ -608,3 +615,23 @@ def process_email_queue(member_list, subject, message):
         message=f'Email Campaign Finished. Sent {success_count} emails.',
         user=frappe.session.user
     )
+
+@frappe.whitelist()
+def get_agent_settings():
+    """
+    Fetches settings for the frontend. 
+    Intentionally returns empty strings for passwords to ensure security.
+    """
+    try:
+        doc = frappe.get_single("AI Agent Settings")
+        return {
+            "livekit_url": doc.livekit_url,
+            "livekit_api_key": doc.livekit_api_key,
+            "livekit_outbound_trunk_id": doc.livekit_outbound_trunk_id,
+            # We do NOT send the actual secret hashes to the frontend
+            "livekit_api_secret": "", 
+            "apollo_api_key": ""
+        }
+    except Exception as e:
+        frappe.log_error(f"Error fetching settings: {str(e)}")
+        return {}

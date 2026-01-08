@@ -6,7 +6,11 @@
  "engine": "InnoDB",
  "field_order": [
   "apollo_api_details_section",
-  "apollo_api_key"
+  "apollo_api_key",
+  "livekit_url",
+  "livekit_api_key",
+  "livekit_api_secret",
+  "livekit_outbound_trunk_id"
  ],
  "fields": [
   {
@@ -18,13 +22,33 @@
    "fieldname": "apollo_api_key",
    "fieldtype": "Password",
    "label": "Apollo API Key"
+  },
+  {
+   "fieldname": "livekit_url",
+   "fieldtype": "Data",
+   "label": "LiveKit URL"
+  },
+  {
+   "fieldname": "livekit_api_key",
+   "fieldtype": "Data",
+   "label": "LiveKit API Key"
+  },
+  {
+   "fieldname": "livekit_api_secret",
+   "fieldtype": "Password",
+   "label": "LiveKit API Secret"
+  },
+  {
+   "fieldname": "livekit_outbound_trunk_id",
+   "fieldtype": "Data",
+   "label": "LiveKit Trunk ID"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-11-26 10:50:07.780938",
+ "modified": "2026-01-07 23:04:19.437075",
  "modified_by": "Administrator",
  "module": "AI Calling Agent",
  "name": "AI Agent Settings",
