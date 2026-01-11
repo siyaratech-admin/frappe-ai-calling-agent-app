@@ -16,7 +16,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, 'src'),
     },
   },
-  base: '/ai_calling_agent/',
+  base: '/assets/ai_calling_agent/frontend/',
   build: {
     outDir: `../${path.basename(path.resolve('..'))}/public/frontend`,
     emptyOutDir: true,
