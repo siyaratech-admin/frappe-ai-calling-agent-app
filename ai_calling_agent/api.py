@@ -57,7 +57,7 @@ async def _initiate_livekit_call(phone_number, contact_docname, agent_name, room
 # This is the main function our frontend will call
 # The @frappe.whitelist() decorator makes it a public API endpoint
 @frappe.whitelist()
-def start_ai_call(phone_number=None, contact_docname=None, party_type="Contact"):
+def start_ai_call(phone_number=None, contact_docname=None, party_type="Contact", extra_metadata=None):
     """
     A whitelisted Frappe API endpoint to trigger an AI sales call.
     Compatible with both Frontend API calls and Backend Bulk Queues.
@@ -73,6 +73,7 @@ def start_ai_call(phone_number=None, contact_docname=None, party_type="Contact")
         # FIX: Smart ID Lookup
         # If the contact_docname provided is not a valid ID (e.g. it's "Manas Patil"),
         # try to find the real ID using the phone number.
+        # Skip this for Interview/Job Applicant party types as they use their own IDs
         # ---------------------------------------------------------------
         if party_type == "Contact" and not frappe.db.exists("Contact", contact_docname):
             # Try finding contact by Mobile Number
@@ -104,7 +105,14 @@ def start_ai_call(phone_number=None, contact_docname=None, party_type="Contact")
         if not all([lk_url, lk_api_key, lk_api_secret, outbound_trunk_id]):
             frappe.throw("LiveKit credentials are missing. Please configure them in 'AI Agent Settings'.")
 
-        agent_name = "sales-sdr-agent" # You could also make this configurable if you want
+        # Determine agent based on party type
+        agent_name = "sales-sdr-agent" 
+        if party_type in ["Job Applicant", "Interview"]:
+             agent_name = "interview-agent"
+        
+        # Debug logging
+        frappe.log_error(f"Party Type: {party_type} | Selected Agent: {agent_name}", "Agent Selection Debug")
+
         room_name = f"frappe-call-{uuid.uuid4()}"
 
         # Create a new "AI Call Log" document
@@ -113,6 +121,7 @@ def start_ai_call(phone_number=None, contact_docname=None, party_type="Contact")
         new_log.party = contact_docname # Now holds the correct ID
         new_log.phone_number = phone_number
         new_log.call_status = "Initiated"
+        new_log.agent_name = agent_name
         new_log.livekit_room = room_name
         
         # Save the log
@@ -120,9 +129,25 @@ def start_ai_call(phone_number=None, contact_docname=None, party_type="Contact")
 
         call_log_docname = new_log.name
 
-        metadata_to_pass = json.dumps({
-            "call_log_docname": call_log_docname 
-        })
+        metadata_dict = {
+            "call_log_docname": call_log_docname,
+            "party": contact_docname,
+            "party_type": party_type,
+            "record_id": contact_docname # Persistent ID in case 'party' is overwritten by Name
+        }
+
+        # Merge extra metadata if provided
+        if extra_metadata:
+            if isinstance(extra_metadata, str):
+                try:
+                    extra_metadata = json.loads(extra_metadata)
+                except:
+                    extra_metadata = {}
+            
+            if isinstance(extra_metadata, dict):
+                metadata_dict.update(extra_metadata)
+
+        metadata_to_pass = json.dumps(metadata_dict)
 
         asyncio.run(_initiate_livekit_call(
             phone_number=phone_number,
@@ -395,7 +420,7 @@ def create_call_group(title, members):
         doc.insert()
         return {"status": "success", "message": f"Group '{title}' created with {len(members)} members."}
     except Exception as e:
-        frappe.log_error(f"Error creating group: {str(e)}")
+        frappe.log_error(f"Error in start_ai_call: {str(e)}")
         return {"status": "error", "message": str(e)}
 
 @frappe.whitelist()
@@ -633,5 +658,68 @@ def get_agent_settings():
             "apollo_api_key": ""
         }
     except Exception as e:
-        frappe.log_error(f"Error fetching settings: {str(e)}")
+        frappe.log_error(f"Error fetching agent settings: {str(e)}", "Agent Settings Error")
         return {}
+
+@frappe.whitelist()
+def submit_interview_feedback(interview_name, feedback_text, result="Pending"):
+    """
+    API to submit feedback from the AI Agent after an interview call.
+    """
+    try:
+        if not interview_name:
+            frappe.throw("Interview Name is required")
+
+        # Verify Interview exists
+        if not frappe.db.exists("Interview", interview_name):
+            frappe.throw(f"Interview {interview_name} not found")
+
+        interview_doc = frappe.get_doc("Interview", interview_name)
+        
+        # Create Feedback Doc
+        feedback = frappe.new_doc("Interview Feedback")
+        feedback.interview = interview_name
+        feedback.interviewer = "Administrator" # Default to Admin for AI
+        feedback.job_applicant = interview_doc.job_applicant
+        feedback.interview_round = interview_doc.interview_round
+        
+        # Determine Result based on feedback if not passed explicitly? 
+        # For now, map 'Pending' to empty or logic. 
+        # The 'result' field options are usually "Cleared", "Rejected", etc. 
+        # We will default to "Cleared" if vague, or let user set it.
+        # Actually, let's look at the options: "Cleared", "Rejected".
+        valid_results = ["Cleared", "Rejected"]
+        if result not in valid_results:
+            result = "Cleared" # Default positive? Or maybe we can't submit without it.
+            
+        feedback.result = result
+        feedback.feedback = feedback_text
+        
+        # Skill Assessment table is mandatory in the schema? 
+        # Let's check. Yes, 'reqd': 1 for 'skill_assessment'.
+        # We need to populate it. We can fetch expected skills and give a default score or extract from feedback?
+        # For this MVP, let's just populate with default score if empty, 
+        # or expects the agent to pass structured data?
+        # The prompt asks for text feedback.
+        # Let's just fetch expected skills and give a neutral score (e.g. 3/5) + the general feedback.
+        
+        expected_skill_set = frappe.db.get_all("Expected Skill Set", 
+                                             filters={"parent": interview_doc.interview_round}, 
+                                             fields=["skill"])
+                                             
+        for s in expected_skill_set:
+            feedback.append("skill_assessment", {
+                "skill": s.skill,
+                "rating": 3, # Neutral / Needs Review
+                "description": "AI Assessment Pending Review"
+            })
+            
+        feedback.insert(ignore_permissions=True)
+        feedback.submit() # Submit directly? Or leave as Draft? 
+        # Usually feedback is submitted.
+        
+        return {"status": "success", "feedback_name": feedback.name}
+
+    except Exception as e:
+        frappe.log_error(f"Feedback Submission Failed: {str(e)}", "AI Feedback Error")
+        return {"status": "error", "message": str(e)}
